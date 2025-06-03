@@ -161,9 +161,9 @@ def login():
             #メール送信
             send_otp(email, secret) 
 
-            #ワンタイムパスワード入力画面へ
-            return redirect(url_for('verify')) 
-
+            #一度メッセージ画面を表示してセッション保存を安定させる
+            return render_template('otp_sent.html')
+        
         #メールやパスワードが違っていた場合
         return '認証情報が無効です。'
 
