@@ -36,13 +36,13 @@ HTML_HEADER = f"""
 /*スマホの画面（600px以下）のときに文字やボタンを大きくする*/
 @media screen and (max-width: 600px) {{
     body {{
-        font-size: 1.5em;
+        font-size: 1em;
     }}
     input, button, .button {{
-        font-size: 1.5em;
+        font-size: 1em;
     }}
     h1, h2 {{
-        font-size: 1.5em;
+        font-size: 1em;
     }}
 }}
 </style>
@@ -100,17 +100,18 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 #ワンタイムパスワードをメールで送信する関数
-def send_otp(email):
-    secret = pyotp.random_base32() #ランダムなシークレットキーを生成
-    totp = pyotp.TOTP(secret,interval=60) #シークレットキーを使って、60秒で変わるワンタイムパスワードを生成する準備をする
-    
-    otp_code = totp.now() #現時点で使えるワンタイムパスワードの数字を作る
-    msg = Message('ワンタイムパスワード（OTP）', recipients=[email]) #件名、受け手を設定し、メッセージを生成
-    msg.body = f"あなたのワンタイムパスワードは {otp_code} です。60秒間有効です" #メールの本文を設定
-    mail.send(msg) #メールを送る
-    
-    #シークレットキーを返す　→　本当に正しいワンタイムパスワードか確認するために使う。
-    return secret
+def send_otp(email, secret):
+    #secretを使って、60秒ごとに変わるワンタイムパスワードをつくる
+    totp = pyotp.TOTP(secret, interval=60)
+    #現時点で使えるワンタイムパスワードの数字を作る
+    otp_code = totp.now()
+
+    #メールの内容をつくる
+    msg = Message('ワンタイムパスワード（OTP）', recipients=[email])
+    msg.body = f"あなたのワンタイムパスワードは {otp_code} です。60秒間有効です"
+
+    #メールを送信
+    mail.send(msg) 
 
 #ユーザー登録ページの設定
 @app.route('/register', methods=['GET', 'POST'])
@@ -141,31 +142,34 @@ def register():
 
 #トップページ（ログイン画面）の設定
 @app.route('/', methods=['GET', 'POST'])
-#ログインするための関数
 def login():
-    #もしログインボタンを押したら
+    #ログインボタンを押したら
     if request.method == 'POST':
         #フォームに入力されたメールとパスワードを取り出す
         email = request.form['email']
         password = request.form['password']
-        
-        #データベースの中からメールアドレスのユーザーを探す
+
+        #データベースからメールアドレスのユーザーを探す
         user = User.query.filter_by(email=email).first()
-        #もしそのユーザーが存在し、パスワードも合っていたら
+
+        #ユーザーが存在していて、パスワードも合っていたら
         if user and user.password == password:
-            # ワンタイムパスワードを送信（secret=send_otp関数のreturnで返されたsecret）
-            secret = send_otp(email)
-            
-            # セッションにシークレットキーとメールアドレスを保存
+            secret = pyotp.random_base32()  #ランダムなシークレットキーを生成
+            #セッションにシークレットキーとメールアドレスを保存
             session['otp_secret'] = secret
             session['email'] = email
-            #ワンタイムパスワード検証ページへ進む
-            return redirect(url_for('verify'))
+            #メール送信
+            send_otp(email, secret) 
 
-        return '認証情報が無効です。' #メールやパスワードが間違っていたらメッセージを表示
+            #ワンタイムパスワード入力画面へ
+            return redirect(url_for('verify')) 
 
-    #ログイン画面を表示
-    return render_template('login.html') 
+        #メールやパスワードが違っていた場合
+        return '認証情報が無効です。'
+
+    #最初にページを開いたときなどは、ログイン画面を表示
+    return render_template('login.html')
+
 
 #ワンタイムパスワード検証するページの設定
 @app.route('/verify', methods=['GET', 'POST'])
