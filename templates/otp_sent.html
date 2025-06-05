@@ -4,13 +4,13 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>OTP送信完了</title>
+    <title>ワンタイムパスワード送信完了</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* スマホのときだけ文字を大きくする */
         @media screen and (max-width: 600px) {
             body {
-                font-size: 1.2em;  /* スマホだけ1.7倍にする */
+                font-size: 1.2em;  /* スマホだけ1.2倍にする */
             }
             input, button, label, a, h1, p {
                 font-size: 1.2em;
@@ -20,11 +20,11 @@
 </head>
 <body>
     <h1>OTPを送信しました</h1>
-    <p>メールに送られたワンタイムパスワード（OTP）を確認し、次の画面で入力してください。</p>
+    <p>メールに送られたワンタイムパスワードを確認し、次の画面で入力してください。</p>
     <br>
-    <!--OTP入力画面へ遷移するボタン-->
+    <!--ワンタイムパスワード入力画面へ遷移するボタン-->
     <a href="{{ url_for('verify') }}">
-        <button type="button">OTPを入力する</button>
+        <button type="button">ワンタイムパスワードを入力する</button>
     </a>
 </body>
 </html>
